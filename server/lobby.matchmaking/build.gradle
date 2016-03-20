@@ -1,0 +1,4 @@
+dependencies {
+  compile project(":framework.actors")
+  compile project(":room")
+}

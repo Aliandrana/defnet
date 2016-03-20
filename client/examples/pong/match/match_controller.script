@@ -1,0 +1,19 @@
+local ball_id = nil
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("start_game") then  
+    local bat_id = defnet.spawn("#bat_factory")
+    local player_idx = message["player_idx"]
+    if player_idx == 1 then
+      spawn_ball(self)
+    end
+  end
+end
+
+function spawn_ball(self)
+  if ball_id then
+    defnet.delete(ball_id)
+    ball_id = nil
+  end
+  ball_id = defnet.spawn("#ball_factory")  
+end

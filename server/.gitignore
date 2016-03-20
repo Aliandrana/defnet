@@ -1,0 +1,27 @@
+# Gradle
+.gradle
+build/
+*/build/
+*/war/
+
+# Idea
+.idea/.name
+.idea/libraries
+.idea/misc.xml
+.idea/modules.xml
+.idea/uiDesigner.xml
+.idea/workspace.xml
+.idea/compiler.xml
+.idea/gradle.xml
+.idea/vcs.xml
+.idea/copyright/profiles_settings.xml
+.idea/dictionaries/
+.idea/inspectionProfiles/
+classes
+*.iml
+*.ipr
+*.iws
+out
+generated
+generated_proto
+generated_tests

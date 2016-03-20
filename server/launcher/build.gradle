@@ -1,0 +1,19 @@
+task run (type: JavaExec, dependsOn: classes){
+  if(project.hasProperty('host')) {
+    args(host)
+  }
+  if(project.hasProperty('port')){
+    args(port)
+  }
+  description = "Launch server"
+  main = "launcher.EntryPoint"
+  classpath = sourceSets.main.runtimeClasspath
+}
+
+dependencies {
+  compile project(":frontend")
+  compile project(":network.netty")
+  compile project(":dispatcher")
+  compile project(":lobby.matchmaking")
+  compile project(":room.replicated")
+}

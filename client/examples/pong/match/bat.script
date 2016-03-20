@@ -1,0 +1,49 @@
+local bat_size = vmath.vector3(50,150,0)
+local screen_size = vmath.vector3(600,400,0)
+
+function init(self)
+    -- Add initialization code here
+    -- Remove this function if not needed
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("init_local") then
+    msg.post(".", "acquire_input_focus")    
+    go.set_position(vmath.vector3(bat_size.x, screen_size.y/2, 0))
+  elseif message_id == hash("init_remote") then
+    go.set_position(vmath.vector3(screen_size.x - bat_size.x, screen_size.y/2, 0))
+  elseif message_id == hash("move") then
+    local pos = go.get_position()
+    pos.y = pos.y + message["y"]
+    if pos.y > bat_size.y / 2 and pos.y < screen_size.y - bat_size.y / 2 then
+      go.set_position(pos)
+    end
+  end
+end
+
+function on_input(self, action_id, action)
+  local delta_y = 0;
+  if action_id == hash("up") then
+    delta_y = 20
+  elseif action_id == hash("down") then
+    delta_y = -20
+  end 
+  if delta_y ~= 0 then
+    defnet.post(".", "move", {y = delta_y})
+  end
+end
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Remove this function if not needed
+end

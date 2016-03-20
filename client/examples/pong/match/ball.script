@@ -1,0 +1,46 @@
+local screen_size = vmath.vector3(600,400,0)
+local velocity = vmath.vector3(0,0,0)
+local is_local = false;
+local ball_velocity = 800
+
+function update(self, dt)
+  if self.velocity then
+    go.set_position(go.get_position() + self.velocity * dt)
+  end  
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("init_local") then
+    self.is_local = true
+    launch(self, true)
+  elseif message_id == hash("contact_point_response") and self.is_local then
+    if url_tostring(message.other_id) == "/board/enemy_goal" then
+      launch(self, true)    
+      defnet.post(msg.url("."), "add_score", {our_score = false})
+      return
+    elseif url_tostring(message.other_id) == "/board/our_goal" then
+      launch(self, false)
+      defnet.post(msg.url("."), "add_score", {our_score = true})
+      return
+    end
+    local pos = go.get_position()
+    local vel = self.velocity - 2 * vmath.dot(self.velocity, message["normal"]) * message["normal"]
+    defnet.post(msg.url("."), "movement", {position = {x = pos.x, y = pos.y}, velocity = {x = vel.x,y = vel.y}})
+  elseif message_id == hash("movement") then
+    go.set_position(vmath.vector3(self.is_local and message["position"].x or screen_size.x - message["position"].x, message["position"].y, 0))
+    self.velocity = vmath.vector3((self.is_local and 1 or -1) * message["velocity"].x, message["velocity"].y, 0)
+  elseif message_id == hash("add_score") then
+    local is_our = (self.is_local ~= nil) == message["our_score"]
+    msg.post("/board/scores", is_our and "add_our_score" or "add_enemy_score")
+  end
+end
+
+function launch(self, side)
+  defnet.post(msg.url("."), "movement", {position = {x = screen_size.x/2, y = screen_size.y/2}
+    , velocity = {x = side and ball_velocity or -ball_velocity, y = -ball_velocity/2}})
+end
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Remove this function if not needed
+end

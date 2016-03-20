@@ -1,0 +1,48 @@
+require "defnet.defnet"
+
+function init(self)
+  msg.post("#connecting", "enable")
+  msg.post("#main_menu", "disable")
+  msg.post("#waiting", "disable")
+  defnet.connect("localhost", 8282, "pong")
+  defnet.watch()  
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("connected") then
+    if message["type"] == "lobby" then
+      msg.post("#main_menu", "enable")
+      msg.post("#connecting", "disable")
+    elseif message["type"] == "match" then
+      msg.post("#connecting", "disable")
+      msg.post("#main_menu", "disable")
+      msg.post("#waiting", "disable")
+      msg.post("board/controller", "start_game", {player_idx = message["idx"]})  
+    end
+  elseif message_id == hash("start_game") then
+    msg.post("#main_menu", "disable")
+    msg.post("#waiting", "enable")
+    defnet.post("@matchmaking", "find")
+  elseif message_id == hash("proxy_loaded") then
+    msg.post(sender, "init")
+    msg.post(sender, "enable")
+  end
+end
+
+function on_input(self, action_id, action)
+end
+
+function on_reload(self)
+    -- Add reload-handling code here
+    -- Remove this function if not needed
+end

@@ -1,0 +1,6 @@
+images {
+  image: "/examples/resources/images/bat.png"
+}
+images {
+  image: "/examples/resources/images/ball.png"
+}

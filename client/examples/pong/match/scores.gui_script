@@ -1,0 +1,43 @@
+local our_scores = 0
+local enemy_scores = 0
+
+function init(self)
+    -- Add initialization code here
+    -- Remove this function if not needed
+end
+
+function final(self)
+    -- Add finalization code here
+    -- Remove this function if not needed
+end
+
+function update(self, dt)
+    -- Add update code here
+    -- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("add_our_score") then
+    self.our_scores = self.our_scores and self.our_scores + 1 or 1
+  elseif message_id == hash("add_enemy_score") then
+    self.enemy_scores = self.enemy_scores and self.enemy_scores + 1 or 1
+  end
+  local our = gui.get_node("our_scores") 
+  if self.our_scores then
+    gui.set_text(our, self.our_scores)    
+  end  
+  local enemy = gui.get_node("enemy_scores")
+  if self.enemy_scores then
+    gui.set_text(enemy, self.enemy_scores)    
+  end
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end
+
+function on_reload(self)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end

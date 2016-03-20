@@ -1,0 +1,36 @@
+group 'defnet'
+version = "1.0.${System.getenv('BUILD_NUMBER') ?: '0'}"
+
+apply plugin: 'java'
+
+def javaVersion = JavaVersion.VERSION_1_8
+
+repositories {
+  mavenCentral()
+}
+
+configure(subprojects) {
+  group group
+  version version
+  apply plugin: "java"
+  apply plugin: "idea"
+
+  sourceCompatibility = javaVersion
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    compile "org.jetbrains:annotations:13.0"
+    compile "org.slf4j:slf4j-log4j12:$SLF4J_API_VERSION"
+    compile "com.google.guava:guava:$GUAVA_VERSION"
+    compile "net.sf.trove4j:trove4j:3.0.3"
+    compile "com.google.code.findbugs:jsr305:$JSR305_VERSION"
+    testCompile "org.testng:testng:$TESTNG_VERSION"
+  }
+
+  test {
+    useTestNG()
+  }
+}

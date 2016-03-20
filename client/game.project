@@ -1,0 +1,25 @@
+[project]
+title = My project
+version = 0.1
+
+[bootstrap]
+main_collection = /examples/pong/main.collectionc
+
+[input]
+game_binding = /examples/input/game.input_bindingc
+
+[display]
+width = 600
+height = 400
+variable_dt = 0
+
+[physics]
+scale = 0.02
+gravity_y = 0
+
+[script]
+shared_state = 1
+
+[library]
+include_dirs = defnet
+

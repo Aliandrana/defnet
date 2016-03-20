@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":network")
+    compile "io.netty:netty-all:$NETTY_VERSION"
+}

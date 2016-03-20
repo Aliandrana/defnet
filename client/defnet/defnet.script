@@ -1,0 +1,156 @@
+require "defnet.utils"
+
+--we can't get string from this properties if they modified from editor =(
+--go.property("host", hash("localhost"))
+--go.property("port", 8282)
+--go.property("appId", hash(""))
+
+local host = nil
+local port = nil
+local appId = nil
+
+local tcp = nil
+local connected = false
+local room_type = nil
+local handshake = {}
+local net_2_native = {}
+local native_2_net = {}
+local watchers = {}
+
+
+function is_connected(self)
+  return self.connected
+end
+
+function clear(self)
+  if tcp ~= nil then
+    tcp:close()
+  end
+  tcp = socket.tcp()
+  tcp:settimeout(0.1)
+  self.net_objects = {}
+  self.room_type = "dispatcher"
+  self.handshake = {appId = self.appId}
+end
+
+function connect(self, host, port, handshake, type)
+  if is_connected(self) then
+    clear(self)
+  end
+  if tcp:connect(host, port) then
+    if next(handshake) ~= nil then
+      tcp:send(serialize_table(handshake))
+    end
+    self.room_type = type
+    self.handshake = handshake
+    self.connected = true
+    for i = 0, table.getn(watchers) do
+      local connected_info = self.handshake
+      connected_info["type"] = self.room_type
+      msg.post(watchers[i], "connected", connected_info)
+    end
+  end
+end
+
+function init(self)
+  math.randomseed( os.time() )
+  clear(self)
+end
+
+function final(self)
+  tcp:close()
+end
+
+function update(self, dt)
+  if not is_connected(self) and self.host ~= nil then
+    connect(self, self.host, self.port, {appId = self.appId}, "dispatcher")
+  end 
+
+  if not is_connected(self) then
+    return
+  end
+  local received = tcp:receive()
+  if received ~= nil then
+    msg.post("#", "new_message", deserialize_table(received))
+  end
+end
+
+function send(table)
+    tcp:send(serialize_table(table))  
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("send_spawn") then
+    local old_id = message["obj"]
+    local client_idx = self.handshake["idx"] or math.random(10000)
+    local net_id = client_idx..old_id
+    local native_id = url_tostring(msg.url(old_id))
+    net_2_native[net_id] = native_id
+    native_2_net[native_id] = net_id
+    message["obj"] = net_id
+    message["type"] = "spawn"
+    send(message)
+  elseif message_id == hash("send_message") then
+    local from_net_id = native_2_net[url_tostring(message["from"])]
+    if from_net_id == nil then
+      message["from"] = nil
+    else
+      message["from"] = from_net_id
+    end
+    local to_string = url_tostring(message["to"])
+    local to_net_id = native_2_net[to_string]
+    if to_net_id == nil and not is_system_addressee(to_string) then
+      print ("Can't send net message to "..to_string)
+      return
+    end
+    message["to"] = to_net_id or to_string
+    message["type"] = "post"
+    send(message)
+  elseif message_id == hash("new_message") then -- message from server
+    local type = message["type"]
+    if type == "redirect" then
+      connect(self, message["host"], message["port"], message["handshake"], message["room_type"])
+    elseif type == "post" then
+      local to_native = net_2_native[message["to"]]
+      if to_native == nil then
+        print("can't deliver message from net to "..message["to"])
+        return
+      end
+      msg.post(to_native, message["name"], message["params"])
+    elseif type == "spawn" then
+      local id = factory.create(message["factory"], message["position"], message["rotation"], message["properties"] or {}, message["scale"])
+      if id == nil then
+        print("Can't spawn from "..message["factory"])
+        return
+      end
+      local net_id = message["obj"]
+      local native_id = msg.url(id)
+      net_2_native[net_id] = native_id
+      native_2_net[native_id] = net_id   
+      msg.post(msg.url(id), "init_remote")   
+    elseif type == "delete" then
+      print("delete: Not implemented yet")
+    else
+      print("Unknown type "..type)
+    end
+  elseif message_id == hash("watch") then
+    watchers[table.getn(watchers)] = sender
+    if is_connected(self) then
+      local connected_info = self.handshake
+      connected_info["type"] = self.room_type
+      msg.post(sender, "connected", connected_info)
+    end
+  elseif message_id == hash("connect") then
+    self.host = message["host"]
+    self.port = message["port"]
+    self.appId = message["appId"]
+    print("Connecting to "..self.host..":"..self.port.." as '"..self.appId.."'")
+  else
+    print("Unknown message_id "..message_id)
+  end
+end
+
+function on_input(self, action_id, action)
+    -- Add input-handling code here
+    -- Remove this function if not needed
+end
